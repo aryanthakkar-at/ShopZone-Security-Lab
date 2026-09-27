@@ -264,8 +264,15 @@ app.get("/dashboard", requireLogin, (req, res) => {
 // The application does NOT check whether the user is an admin.
 //
 // This is the vulnerability we will exploit in Lab 01.
+// Vulnerable admin panel code as it doesn't check for the role
 
 app.get("/admin", requireLogin, (req, res) => {
+
+     if (req.session.user.role !== "admin") {
+        return res.status(403).send("Access denied");
+    }
+
+    // Admin page continues here
 
     res.send(`
         <html>
