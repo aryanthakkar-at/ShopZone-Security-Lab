@@ -1,6 +1,7 @@
 const express = require("express");
 const path = require("path");
 const session = require("express-session");
+//LAB 2const cookieParser = require("cookie-parser");
 
 const app = express();
 const PORT = 3000;
@@ -34,6 +35,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // Read form data
 app.use(express.urlencoded({ extended: true }));
+// LAB2 - app.use(cookieParser());
 
 // Login session
 app.use(
@@ -111,13 +113,18 @@ app.post("/login", (req, res) => {
 
     // Store logged-in user in the session
     req.session.user = {
-        username: user.username,
-        role: user.role
-    };
+    username: user.username,
+    role: user.role
+};
 
-    res.redirect("/dashboard");
+// LAB 02 - VULNERABLE
+// The server tells the browser whether the user is an admin.
+// This value can be modified by the user.
+// res.cookie("Admin", user.role === "admin" ? "true" : "false");
+
+res.redirect("/dashboard");
+
 });
-
 
 // --------------------------------------------------
 // LOGIN PROTECTION
@@ -268,7 +275,12 @@ app.get("/dashboard", requireLogin, (req, res) => {
 
 app.get("/admin", requireLogin, (req, res) => {
 
-     if (req.session.user.role !== "admin") {
+    // LAB 02 - VULNERABLE
+    //if (req.cookies.Admin !== "true") {
+    //        return res.status(403).send("Access denied");
+    //    }
+
+    if (req.session.user.role !== "admin") {
         return res.status(403).send("Access denied");
     }
 
