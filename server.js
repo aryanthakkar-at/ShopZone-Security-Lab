@@ -975,6 +975,134 @@ app.post("/lab6-admin/delete/execute", requireLogin, (req, res) => {
 });
 
 // --------------------------------------------------
+// LAB 07 — FILE PATH TRAVERSAL
+// --------------------------------------------------
+
+app.get("/lab7-file", (req, res) => {
+
+    const filename = req.query.file;
+
+    if (!filename) {
+        return res.send(`
+            <html>
+
+            <head>
+                <title>ShopZone File Viewer</title>
+
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        background: #f7f7f7;
+                        margin: 0;
+                        padding: 0;
+                    }
+
+                    .navbar {
+                        background: white;
+                        padding: 20px 8%;
+                        border-bottom: 1px solid #ddd;
+                    }
+
+                    .navbar a {
+                        text-decoration: none;
+                        color: #222;
+                        margin-right: 20px;
+                    }
+
+                    .container {
+                        max-width: 800px;
+                        margin: 50px auto;
+                        background: white;
+                        padding: 40px;
+                        border: 1px solid #ddd;
+                    }
+
+                    .file {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding: 15px;
+                        border: 1px solid #ddd;
+                        margin-top: 10px;
+                    }
+
+                    .file a {
+                        background: #222;
+                        color: white;
+                        padding: 8px 15px;
+                        text-decoration: none;
+                        border-radius: 4px;
+                    }
+                </style>
+
+            </head>
+
+            <body>
+
+                <div class="navbar">
+                    <a href="/">Home</a>
+                    <a href="/login">Login</a>
+                </div>
+
+                <div class="container">
+
+                    <h1>ShopZone File Viewer</h1>
+
+                    <p>
+                        Select a product file to view its contents.
+                    </p>
+
+                    <div class="file">
+                        <span>product1.txt</span>
+                        <a href="/lab7-file?file=product1.txt">
+                            View
+                        </a>
+                    </div>
+
+                    <div class="file">
+                        <span>product2.txt</span>
+                        <a href="/lab7-file?file=product2.txt">
+                            View
+                        </a>
+                    </div>
+
+                    <div class="file">
+                        <span>product3.txt</span>
+                        <a href="/lab7-file?file=product3.txt">
+                            View
+                        </a>
+                    </div>
+
+                </div>
+
+            </body>
+
+            </html>
+        `);
+    }
+
+    // FIXED CODE
+    const baseDir = path.resolve(
+        __dirname,
+        "public",
+        "files"
+    );
+
+    const filePath = path.resolve(
+        baseDir,
+        filename
+    );
+
+    // Make sure the requested file stays inside public/files
+    if (!filePath.startsWith(baseDir + path.sep)) {
+        return res.status(403).send("Access denied");
+    }
+
+    res.sendFile(filePath);
+});
+
+
+// --------------------------------------------------
 // LOGOUT
 // --------------------------------------------------
 
