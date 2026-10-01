@@ -5,9 +5,6 @@ const session = require("express-session");
 const app = express();
 const PORT = 3000;
 
-// --------------------------------------------------
-// LAB 01 - BROKEN ACCESS CONTROL
-// --------------------------------------------------
 
 // Fake accounts for this local security lab only.
 // These are NOT real passwords.
@@ -22,7 +19,6 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // Read form data
 app.use(express.urlencoded({ extended: true }));
-// LAB2 - app.use(cookieParser());
 
 // Login session
 app.use(
@@ -103,10 +99,6 @@ app.post("/login", (req, res) => {
     username: user.username,
     role: user.role
 };
-
-// LAB 02 - Fixed
-// The server tells the browser whether the user is an admin.
-// This value can be modified by the user.
 
 res.redirect("/dashboard");
 
@@ -247,27 +239,9 @@ app.get("/dashboard", requireLogin, (req, res) => {
 });
 
 
-// --------------------------------------------------
-// LAB 01 VULNERABLE ADMIN PANEL
-// --------------------------------------------------
-
-// IMPORTANT:
-// There is intentionally NO role check here.
-//
-// A logged-in user only needs to be authenticated.
-// The application does NOT check whether the user is an admin.
-//
-// This is the vulnerability we will exploit in Lab 01.
-// Vulnerable admin panel code as it doesn't check for the role
-
-// --------------------------------------------------
-// LAB 03 - VULNERABLE ACCOUNT PAGE
-// --------------------------------------------------
-
 app.get("/account", requireLogin, (req, res) => {
 
-    // LAB 03 - Fixed
-    // The server uses the username from the authenticated session.
+
     const username = req.session.user.username;
 
     const user = users.find(
@@ -380,8 +354,6 @@ app.get("/account", requireLogin, (req, res) => {
 });
 
 app.get("/admin", requireLogin, (req, res) => {
-
-    // LAB 02 - VULNERABLE
 
     if (req.session.user.role !== "admin") {
         return res.status(403).send("Access denied");
@@ -535,13 +507,49 @@ app.get("/admin", requireLogin, (req, res) => {
 });
 
 // --------------------------------------------------
-// LAB 04 - VULNERABLE METHOD-BASED ACCESS CONTROL
+// LAB 05 ADMIN PAGE
 // --------------------------------------------------
+
+app.get("/lab5-admin", requireLogin, (req, res) => {
+
+// Server-side authorization check
+    if (req.session.user.role !== "admin") {
+        return res.status(403).send("Access denied");
+    }
+
+    res.send(`
+        <html>
+
+        <head>
+            <title>ShopZone Lab 5 Admin Panel</title>
+        </head>
+
+        <body>
+
+            <h1>ShopZone Admin Panel</h1>
+
+            <p><strong>LAB 05:</strong> URL-Based Access Control</p>
+
+            <hr>
+
+            <h2>Administrator Area</h2>
+
+            <p>
+                This page should only be accessible to administrators.
+            </p>
+
+            <p>
+                Sensitive administrative functionality is available here.
+            </p>
+
+        </body>
+
+        </html>
+    `);
+});
 
 app.post("/admin/promote", requireLogin, (req, res) => {
 
-    // LAB 04 - Fixed
-    // Authorization is only checked for POST requests.
         if (req.session.user.role !== "admin") {
             return res.status(403).send("Access denied");
         }
