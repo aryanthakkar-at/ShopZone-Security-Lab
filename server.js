@@ -570,6 +570,411 @@ app.post("/admin/promote", requireLogin, (req, res) => {
 });
 
 // --------------------------------------------------
+// LAB 06 — MULTI-STEP ACCESS CONTROL
+// --------------------------------------------------
+
+// Step 1 — Lab 6 Admin Page
+app.get("/lab6-admin", requireLogin, (req, res) => {
+
+    if (req.session.user.role !== "admin") {
+        return res.status(403).send("Access denied");
+    }
+
+    res.send(`
+        <html>
+
+        <head>
+            <title>ShopZone Lab 6 Admin Panel</title>
+
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background: #f7f7f7;
+                    margin: 0;
+                    padding: 0;
+                }
+
+                .navbar {
+                    background: white;
+                    padding: 20px 8%;
+                    border-bottom: 1px solid #ddd;
+                }
+
+                .navbar a {
+                    text-decoration: none;
+                    color: #222;
+                    margin-right: 20px;
+                }
+
+                .admin-panel {
+                    max-width: 900px;
+                    margin: 50px auto;
+                    background: white;
+                    padding: 40px;
+                    border: 1px solid #ddd;
+                }
+
+                .warning {
+                    padding: 15px;
+                    background: #fff3cd;
+                    border: 1px solid #ffeeba;
+                    margin-bottom: 30px;
+                }
+
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 20px;
+                }
+
+                th,
+                td {
+                    padding: 15px;
+                    border: 1px solid #ddd;
+                    text-align: left;
+                }
+
+                th {
+                    background: #f2f2f2;
+                }
+
+                .delete-button {
+                    background: #dc3545;
+                    color: white;
+                    border: none;
+                    padding: 8px 15px;
+                    cursor: pointer;
+                    border-radius: 4px;
+                }
+
+                .delete-button:hover {
+                    background: #b02a37;
+                }
+            </style>
+
+        </head>
+
+        <body>
+
+            <div class="navbar">
+                <a href="/dashboard">Dashboard</a>
+                <a href="/logout">Logout</a>
+            </div>
+
+            <div class="admin-panel">
+
+                <h1>ShopZone Lab 6 Admin Panel</h1>
+
+                <div class="warning">
+                    <strong>LAB 06:</strong>
+                    Multi-Step Process with Missing Access Control
+                </div>
+
+                <p>
+                    Select a user below to begin the deletion process.
+                </p>
+
+                <table>
+
+                    <tr>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Action</th>
+                    </tr>
+
+                    ${users.map(user => `
+                        <tr>
+
+                            <td>${user.username}</td>
+
+                            <td>${user.role}</td>
+
+                            <td>
+                                <form
+                                    method="GET"
+                                    action="/lab6-admin/delete"
+                                >
+
+                                    <input
+                                        type="hidden"
+                                        name="username"
+                                        value="${user.username}"
+                                    >
+
+                                    <button
+                                        type="submit"
+                                        class="delete-button"
+                                    >
+                                        Delete
+                                    </button>
+
+                                </form>
+                            </td>
+
+                        </tr>
+                    `).join("")}
+
+                </table>
+
+            </div>
+
+        </body>
+
+        </html>
+    `);
+});
+
+
+// Step 2 — Select user
+app.get("/lab6-admin/delete", requireLogin, (req, res) => {
+
+    if (req.session.user.role !== "admin") {
+        return res.status(403).send("Access denied");
+    }
+
+    const username = req.query.username;
+
+    const user = users.find(
+        (account) => account.username === username
+    );
+
+    if (!user) {
+        return res.status(404).send("User not found");
+    }
+
+    res.send(`
+        <html>
+
+        <head>
+            <title>Delete User</title>
+
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background: #f7f7f7;
+                    text-align: center;
+                    padding: 80px;
+                }
+
+                .box {
+                    background: white;
+                    max-width: 500px;
+                    margin: auto;
+                    padding: 40px;
+                    border: 1px solid #ddd;
+                }
+
+                button {
+                    padding: 10px 20px;
+                    cursor: pointer;
+                }
+            </style>
+        </head>
+
+        <body>
+
+            <div class="box">
+
+                <h1>Delete User</h1>
+
+                <p>
+                    You selected user:
+                    <strong>${user.username}</strong>
+                </p>
+
+                <p>
+                    Click below to continue.
+                </p>
+
+                <form
+                    method="POST"
+                    action="/lab6-admin/delete/confirm"
+                >
+
+                    <input
+                        type="hidden"
+                        name="username"
+                        value="${user.username}"
+                    >
+
+                    <button type="submit">
+                        Continue
+                    </button>
+
+                </form>
+
+            </div>
+
+        </body>
+
+        </html>
+    `);
+});
+
+
+// Step 3 — Confirm deletion
+app.post("/lab6-admin/delete/confirm", requireLogin, (req, res) => {
+
+    if (req.session.user.role !== "admin") {
+        return res.status(403).send("Access denied");
+    }
+
+    const username = req.body.username;
+
+    const user = users.find(
+        (account) => account.username === username
+    );
+
+    if (!user) {
+        return res.status(404).send("User not found");
+    }
+
+    res.send(`
+        <html>
+
+        <head>
+            <title>Confirm Delete</title>
+
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background: #f7f7f7;
+                    text-align: center;
+                    padding: 80px;
+                }
+
+                .box {
+                    background: white;
+                    max-width: 500px;
+                    margin: auto;
+                    padding: 40px;
+                    border: 1px solid #ddd;
+                }
+
+                .delete-button {
+                    background: #dc3545;
+                    color: white;
+                    border: none;
+                    padding: 10px 20px;
+                    cursor: pointer;
+                }
+            </style>
+        </head>
+
+        <body>
+
+            <div class="box">
+
+                <h1>Confirm Deletion</h1>
+
+                <p>
+                    Are you sure you want to delete
+                    <strong>${user.username}</strong>?
+                </p>
+
+                <form
+                    method="POST"
+                    action="/lab6-admin/delete/execute"
+                >
+
+                    <input
+                        type="hidden"
+                        name="username"
+                        value="${user.username}"
+                    >
+
+                    <button
+                        type="submit"
+                        class="delete-button"
+                    >
+                        Confirm Delete
+                    </button>
+
+                </form>
+
+            </div>
+
+        </body>
+
+        </html>
+    `);
+});
+
+
+// Step 4 — Execute deletion
+app.post("/lab6-admin/delete/execute", requireLogin, (req, res) => {
+
+    // Server-side authorization check
+    if (req.session.user.role !== "admin") {
+        return res.status(403).send("Access denied");
+    }
+
+    const username = req.body.username;
+
+    const userIndex = users.findIndex(
+        (account) => account.username === username
+    );
+
+    if (userIndex === -1) {
+        return res.status(404).send("User not found");
+    }
+
+    users.splice(userIndex, 1);
+
+    res.send(`
+        <html>
+
+        <head>
+            <title>User Deleted</title>
+
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background: #f7f7f7;
+                    text-align: center;
+                    padding: 80px;
+                }
+
+                .box {
+                    background: white;
+                    max-width: 500px;
+                    margin: auto;
+                    padding: 40px;
+                    border: 1px solid #ddd;
+                }
+
+                a {
+                    color: #222;
+                }
+            </style>
+        </head>
+
+        <body>
+
+            <div class="box">
+
+                <h1>User Deleted</h1>
+
+                <p>
+                    User <strong>${username}</strong>
+                    has been deleted.
+                </p>
+
+                <br>
+
+                <a href="/lab6-admin">
+                    Back to Admin Panel
+                </a>
+
+            </div>
+
+        </body>
+
+        </html>
+    `);
+});
+
+// --------------------------------------------------
 // LOGOUT
 // --------------------------------------------------
 
