@@ -1,7 +1,6 @@
 const express = require("express");
 const path = require("path");
 const session = require("express-session");
-//LAB 2 const cookieParser = require("cookie-parser");
 
 const app = express();
 const PORT = 3000;
@@ -13,21 +12,9 @@ const PORT = 3000;
 // Fake accounts for this local security lab only.
 // These are NOT real passwords.
 const users = [
-    {
-        username: "admin",
-        password: "admin123",
-        role: "admin"
-    },
-    {
-        username: "daniel",
-        password: "daniel123",
-        role: "user"
-    },
-    {
-        username: "pauline",
-        password: "pauline123",
-        role: "user"
-    }
+    { username: "admin", password: "admin123", role: "admin", promoted: true },
+    { username: "daniel", password: "daniel123", role: "user", promoted: false },
+    { username: "pauline", password: "pauline123", role: "user", promoted: false }
 ];
 
 // Serve files from the public folder
@@ -117,10 +104,9 @@ app.post("/login", (req, res) => {
     role: user.role
 };
 
-// LAB 02 - VULNERABLE
+// LAB 02 - Fixed
 // The server tells the browser whether the user is an admin.
 // This value can be modified by the user.
-// res.cookie("Admin", user.role === "admin" ? "true" : "false");
 
 res.redirect("/dashboard");
 
@@ -280,10 +266,8 @@ app.get("/dashboard", requireLogin, (req, res) => {
 
 app.get("/account", requireLogin, (req, res) => {
 
-    // LAB 03 - VULNERABLE
-    // The server trusts the username supplied in the URL.
-    //const requestedUsername = req.query.username;
-
+    // LAB 03 - Fixed
+    // The server uses the username from the authenticated session.
     const username = req.session.user.username;
 
     const user = users.find(
@@ -398,9 +382,6 @@ app.get("/account", requireLogin, (req, res) => {
 app.get("/admin", requireLogin, (req, res) => {
 
     // LAB 02 - VULNERABLE
-    //if (req.cookies.Admin !== "true") {
-    //        return res.status(403).send("Access denied");
-    //    }
 
     if (req.session.user.role !== "admin") {
         return res.status(403).send("Access denied");
@@ -491,6 +472,15 @@ app.get("/admin", requireLogin, (req, res) => {
                     This page is intentionally vulnerable to broken access control.
                 </div>
 
+                <hr>
+
+                <h2>Promote User</h2>
+
+                <form method="POST" action="/admin/promote">
+                    <input type="text" name="username" placeholder="Username" required>
+                    <button type="submit">Promote User</button>
+                </form>
+
                 <h2>User Accounts</h2>
 
                 <p>
@@ -544,6 +534,32 @@ app.get("/admin", requireLogin, (req, res) => {
     `);
 });
 
+// --------------------------------------------------
+// LAB 04 - VULNERABLE METHOD-BASED ACCESS CONTROL
+// --------------------------------------------------
+
+app.post("/admin/promote", requireLogin, (req, res) => {
+
+    // LAB 04 - Fixed
+    // Authorization is only checked for POST requests.
+        if (req.session.user.role !== "admin") {
+            return res.status(403).send("Access denied");
+        }
+
+    const username = req.body.username;
+
+    const user = users.find(
+        (account) => account.username === username
+    );
+
+    if (!user) {
+        return res.status(404).send("User not found");
+    }
+
+    user.promoted = true;
+
+    res.send(`User ${user.username} has been promoted.`);
+});
 
 // --------------------------------------------------
 // LOGOUT
