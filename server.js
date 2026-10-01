@@ -1,7 +1,7 @@
 const express = require("express");
 const path = require("path");
 const session = require("express-session");
-//LAB 2const cookieParser = require("cookie-parser");
+//LAB 2 const cookieParser = require("cookie-parser");
 
 const app = express();
 const PORT = 3000;
@@ -219,6 +219,7 @@ app.get("/dashboard", requireLogin, (req, res) => {
 
                 <nav>
                     <a href="/">Home</a>
+                    <a href="/account?username=${user.username}">My Account</a>
                     <a href="/logout">Logout</a>
                 </nav>
             </header>
@@ -272,6 +273,127 @@ app.get("/dashboard", requireLogin, (req, res) => {
 //
 // This is the vulnerability we will exploit in Lab 01.
 // Vulnerable admin panel code as it doesn't check for the role
+
+// --------------------------------------------------
+// LAB 03 - VULNERABLE ACCOUNT PAGE
+// --------------------------------------------------
+
+app.get("/account", requireLogin, (req, res) => {
+
+    // LAB 03 - VULNERABLE
+    // The server trusts the username supplied in the URL.
+    //const requestedUsername = req.query.username;
+
+    const username = req.session.user.username;
+
+    const user = users.find(
+        (account) => account.username === username
+    );
+
+    if (!user) {
+        return res.status(404).send("User not found");
+    }
+
+    res.send(`
+        <html>
+
+        <head>
+            <title>ShopZone Account</title>
+
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background: #f7f7f7;
+                    margin: 0;
+                    padding: 0;
+                }
+
+                .navbar {
+                    background: white;
+                    padding: 20px 8%;
+                    border-bottom: 1px solid #ddd;
+                }
+
+                .navbar a {
+                    text-decoration: none;
+                    color: #222;
+                    margin-right: 20px;
+                }
+
+                .account {
+                    max-width: 700px;
+                    margin: 50px auto;
+                    background: white;
+                    padding: 40px;
+                    border: 1px solid #ddd;
+                }
+
+                .info {
+                    margin-top: 25px;
+                }
+
+                .info p {
+                    padding: 12px;
+                    background: #f5f5f5;
+                    border-bottom: 1px solid #ddd;
+                }
+
+                .warning {
+                    margin-top: 30px;
+                    padding: 15px;
+                    background: #fff3cd;
+                    border: 1px solid #ffeeba;
+                }
+            </style>
+        </head>
+
+        <body>
+
+            <div class="navbar">
+                <a href="/dashboard">Dashboard</a>
+                <a href="/logout">Logout</a>
+            </div>
+
+            <div class="account">
+
+                <h1>My Account</h1>
+
+                <div class="info">
+
+                    <p>
+                        <strong>Username:</strong>
+                        ${user.username}
+                    </p>
+
+                    <p>
+                        <strong>Role:</strong>
+                        ${user.role}
+                    </p>
+
+                    <p>
+                        <strong>Email:</strong>
+                        ${user.username}@shopzone.local
+                    </p>
+
+                    <p>
+                        <strong>Orders:</strong>
+                        5
+                    </p>
+
+                </div>
+
+                <div class="warning">
+                    <strong>LAB 03:</strong>
+                    This page is intentionally vulnerable to IDOR.
+                </div>
+
+            </div>
+
+        </body>
+
+        </html>
+    `);
+});
 
 app.get("/admin", requireLogin, (req, res) => {
 
